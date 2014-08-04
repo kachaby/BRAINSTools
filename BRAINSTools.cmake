@@ -9,119 +9,6 @@ set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   )
 
-#-----------------------------------------------------------------------------
-if(BRAINSTools_REQUIRES_VTK)
-#  message("VTK_DIR:${VTK_DIR}")
-  find_package(VTK REQUIRED)
-  if(VTK_FOUND)
-    include(${VTK_USE_FILE})
-  endif()
-#  message("VTK_USE_FILE:${VTK_USE_FILE}")
-#  message("VTK_INCLUDE_DIRS:${VTK_INCLUDE_DIRS}")
-  include_directories(${VTK_INCLUDE_DIRS})
-  if(Slicer_BUILD_BRAINSTOOLS)
-    set(ITK_VTK_COMPONENTS
-        ITKIOVTK
-        ITKVTK
-    )
-  else()  ## Not Slicer build
-    set(ITK_VTK_COMPONENTS
-        ITKVtkGlue
-    )
-  endif()
-  message(STATUS "Using ITKVtkGlue: ${ITK_VTK_COMPONENTS}")
-endif()
-if(Slicer_BUILD_BRAINSTOOLS) ## Slicer has it's own internal MGHIO that conflicts with ITK
-  set(ITK_MGHIO "")
-else()
-  set(ITK_MGHIO MGHIO )
-endif()
-
-#-----------------------------------------------------------------------------
-set(ITK_IO_MODULES_USED "")
-find_package(ITK COMPONENTS
-  ITKAnisotropicSmoothing
-  ITKBinaryMathematicalMorphology
-  ITKCommon
-  ITKConnectedComponents
-  ITKCurvatureFlow
-  ITKDeprecated
-  ITKDiffusionTensorImage
-  ITKDisplacementField
-  ITKDistanceMap
-  ITKFFT
-  ITKFastMarching
-  ITKHDF5
-  ITKIOBMP
-  ITKIOBioRad
-  ITKIODCMTK
-  ITKIOGDCM
-  ITKIOGE
-  ITKIOGIPL
-  ITKIOImageBase
-  ITKIOJPEG
-  ITKIOLSM
-  ITKIOMeta
-  ITKIONIFTI
-  ITKIONRRD
-  ITKIOPNG
-  ITKIORAW
-  ${ITK_MGHIO}
-  ITKIOSpatialObjects
-  ITKIOStimulate
-  ITKIOTIFF
-  ITKIOTransformBase
-  ITKIOXML
-  ITKImageAdaptors
-  ITKImageCompare
-  ITKImageCompose
-  ITKImageFeature
-  ITKImageFilterBase
-  ITKImageFunction
-  ITKImageFusion
-  ITKImageGradient
-  ITKImageGrid
-  ITKImageIntensity
-  ITKImageSources
-  ITKImageStatistics
-  ITKLabelMap
-  ITKLabelVoting
-  ITKLevelSets
-  ITKMathematicalMorphology
-  ITKMesh
-  ITKMetricsv4
-  ITKOptimizers
-  ITKOptimizersv4
-  ITKPDEDeformableRegistration
-  ITKQuadEdgeMesh
-  ITKQuadEdgeMeshFiltering
-  ITKRegionGrowing
-  ITKRegistrationCommon
-  ITKRegistrationMethodsv4
-  ITKReview
-  ITKSmoothing
-  ITKSpatialObjects
-  ITKStatistics
-  ITKTestKernel
-  ITKThresholding
-  ITKTransform
-  ITKV3Compatibility
-  ${ITK_VTK_COMPONENTS}
-  ${ITK_IO_MODULES_USED}
-  REQUIRED
-)
-if(Slicer_BUILD_BRAINSTOOLS)
-  set(ITK_NO_IO_FACTORY_REGISTER_MANAGER 1)
-endif()
-include(${ITK_USE_FILE})
-
-
-#-----------------------------------------------------------------------------
-find_package(SlicerExecutionModel REQUIRED GenerateCLP)
-include(${GenerateCLP_USE_FILE})
-include(${SlicerExecutionModel_USE_FILE})
-include(${SlicerExecutionModel_CMAKE_DIR}/SEMMacroBuildCLI.cmake)
-
 if(USE_ANTS)
   # find ANTS includes
   message("ANTs_SOURCE_DIR=${ANTs_SOURCE_DIR}")
@@ -189,11 +76,6 @@ set(TestData_DIR ${CMAKE_CURRENT_SOURCE_DIR}/TestData)
 #
 # choose between using HDF5 or MAT format transform files
 set(XFRM_EXT "h5" CACHE STRING "Choose the preferred transform file format")
-
-#-----------------------------------------------------------------------------
-# BRAINSCommonLib (Required)
-#-----------------------------------------------------------------------------
-include(CMakeBRAINS3BuildMacros)
 
 add_subdirectory(BRAINSCommonLib)
 

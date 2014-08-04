@@ -1,8 +1,8 @@
 
-if(NOT ITK_FOUND) #See if it has already been found because this is a nested project
-  find_package(ITK REQUIRED)
-  include(${ITK_USE_FILE})
-endif()
+# if(NOT ITK_FOUND) #See if it has already been found because this is a nested project
+#   find_package(ITK REQUIRED)
+#   include(${ITK_USE_FILE})
+# endif()
 
 set(VTK_LIBRARIES QVTK vtkCommon vtkRendering)
 

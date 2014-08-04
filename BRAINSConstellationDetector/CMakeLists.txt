@@ -2,6 +2,8 @@
 #-----------------------------------------------------------------------------
 # Output directories.
 #
+include(CMakeBRAINS3BuildMacros)
+
 add_subdirectory(src)
 add_subdirectory(landmarkStatistics)
 

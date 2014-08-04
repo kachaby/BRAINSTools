@@ -1,3 +1,4 @@
+include(CMakeBRAINS3BuildMacros)
 ##- project(BRAINSMultiModeSegment)
 #-----------------------------------------------------------------------------
 # Output directories.

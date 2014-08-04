@@ -16,9 +16,15 @@
 #-----------------------------------------------------------------------------
 #-----------------------------------------------------------------------------
 ## A macro to create CLP programs for Slicer or BRAINS3
+if(NOT SlicerExecutionModel_FOUND)
+  #-----------------------------------------------------------------------------
+  find_package(SlicerExecutionModel REQUIRED GenerateCLP)
+  include(${GenerateCLP_USE_FILE})
+  include(${SlicerExecutionModel_USE_FILE})
+  include(${SlicerExecutionModel_CMAKE_DIR}/SEMMacroBuildCLI.cmake)
+endif()
 
 if(NOT StandardBRAINSBuildMacro)
-  include(${SlicerExecutionModel_CMAKE_DIR}/SEMMacroBuildCLI.cmake)
   macro(StandardBRAINSBuildMacro)
     set(options
       EXECUTABLE_ONLY

@@ -1,3 +1,5 @@
+include(CMakeBRAINS3BuildMacros)
+
 StandardBRAINSBuildMacro( NAME BRAINSMultiSTAPLE
   TARGET_LIBRARIES BRAINSCommonLib ${ITK_LIBRARIES} )
 

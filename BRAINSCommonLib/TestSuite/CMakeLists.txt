@@ -1,4 +1,3 @@
-
 add_executable(PrettyPrintTableTest PrettyPrintTableTest.cxx)
 target_link_libraries(PrettyPrintTableTest BRAINSCommonLib)
 

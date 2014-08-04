@@ -3,6 +3,22 @@ project (DWIConvert)
 #-----------------------------------------------------------------------------
 enable_testing()
 
+include(CMakeBRAINS3BuildMacros)
+if(Slicer_BUILD_BRAINSTOOLS) ## Slicer has it's own internal MGHIO that conflicts with ITK
+  set(ITK_MGHIO "")
+else()
+  set(ITK_MGHIO MGHIO )
+endif()
+find_package(ITK COMPONENTS
+  ${ITK_MGHIO}
+  ITKCommon
+  ITKGDCM
+  REQUIRED)
+if(Slicer_BUILD_BRAINSTOOLS)
+  set(ITK_NO_IO_FACTORY_REGISTER_MANAGER 1)
+endif()
+include(${ITK_USE_FILE})
+
 set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_MODULE_PATH})
 
 set(DWIConvertSupportLib_SRCS

@@ -1,4 +1,5 @@
 project(BRAINSStripRotation)
+include(CMakeBRAINS3BuildMacros)
 
 set(prog BRAINSStripRotation)
 

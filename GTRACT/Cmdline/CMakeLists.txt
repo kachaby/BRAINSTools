@@ -1,3 +1,5 @@
+include(CMakeBRAINS3BuildMacros)
+
 option(DEBUGGING_PRINT_IMAGES "Use the DEBUG_IMAGE_VIEWER for debugging" ON)
 ### A local macro for configuring all these programs consistantly for the different platforms.
 ###

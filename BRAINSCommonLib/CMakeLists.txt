@@ -1,8 +1,31 @@
 project(BRAINSCommonLib)
 
-#-----------------------------------------------------------------------------
-# Output directories.
-#
+if(Slicer_BUILD_BRAINSTOOLS) ## Slicer has it's own internal MGHIO that conflicts with ITK
+  set(ITK_MGHIO "")
+else()
+  set(ITK_MGHIO MGHIO )
+endif()
+
+find_package(ITK COMPONENTS
+  ${ITK_MGHIO}
+  ITKCommon
+  ITKMathematicalMorphology
+  ITKBinaryMathematicalMorphology
+  ITKLabelVoting
+  ITKRegionGrowing
+  ITKImageCompare
+  ITKGDCM
+  ITKDistanceMap
+  ITKIOXML
+  REQUIRED)
+if(Slicer_BUILD_BRAINSTOOLS)
+  set(ITK_NO_IO_FACTORY_REGISTER_MANAGER 1)
+endif()
+
+include(${ITK_USE_FILE})
+
+include(CMakeBRAINS3BuildMacros)
+message("ITK_INCLUDE_DIRS:${ITK_INCLUDE_DIRS}")
 
 ## Determine if ITK has MGHIO
 macro(LIST_CONTAINS var value)
@@ -15,9 +38,11 @@ macro(LIST_CONTAINS var value)
 endmacro(LIST_CONTAINS)
 
 LIST_CONTAINS(ITK_HAS_MGHIO MGHIO ${ITK_MODULES_ENABLED})
+
 if (NOT ITK_HAS_MGHIO)
   message(STATUS "WARNING: ITK_MODULES_ENABLED does not contain MGHIO, so programs will not be able to process .mgz formatted files")
 endif()
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/BRAINSCommonLib.h.in
   ${CMAKE_CURRENT_BINARY_DIR}/BRAINSCommonLib.h

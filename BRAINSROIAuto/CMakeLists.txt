@@ -2,6 +2,7 @@
 #-----------------------------------------------------------------------------
 # Output directories.
 #
+include(CMakeBRAINS3BuildMacros)
 
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/BRAINSROIAutoCommonLib.h.in

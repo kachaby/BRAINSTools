@@ -3,6 +3,8 @@
 # Output directories.
 #
 ###
+include(CMakeBRAINS3BuildMacros)
+
 set(ALL_PROGS_LIST
   BRAINSLandmarkInitializer
   )
