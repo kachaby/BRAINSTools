@@ -136,36 +136,40 @@ class CSVReader(BaseInterface):
 
 
 
-def sample_test_lists(in_list, size):
+def subsample_crossValidationSet(in_list, test_size):
     """
-    >>> print zip(*sample_test_lists(range(10), 2))  #doctest: +NORMALIZE_WHITESPACE
+    >>> print zip(*subsample_crossValidationSet(range(10), 2))  #doctest: +NORMALIZE_WHITESPACE
     [([0, 1], [2, 3, 4, 5, 6, 7, 8, 9]),
      ([2, 3], [0, 1, 4, 5, 6, 7, 8, 9]),
      ([4, 5], [0, 1, 2, 3, 6, 7, 8, 9]),
      ([6, 7], [0, 1, 2, 3, 4, 5, 8, 9]),
      ([8, 9], [0, 1, 2, 3, 4, 5, 6, 7])]
 
-    >>> print zip(*sample_test_lists(range(9), 3))  #doctest: +NORMALIZE_WHITESPACE
+    >>> print zip(*subsample_crossValidationSet(range(9), 3))  #doctest: +NORMALIZE_WHITESPACE
     [([0, 1, 2], [3, 4, 5, 6, 7, 8]),
      ([3, 4, 5], [0, 1, 2, 6, 7, 8]),
      ([6, 7, 8], [0, 1, 2, 3, 4, 5])]
     """
-    size = int(size)
-    samples = list()
-    tests = list()
+    test_size = int(test_size)
+    traing_data = list()
+    test_data = list()
     length = len(in_list)
-    base_sample = range(size)
-    for x in range(0, length, size):
-        test = [y + x for y in base_sample]
-        sample = range(length)
+    base_train = range(test_size)
+    for x in range(0, length, test_size):
+        test = [y + x for y in base_train]
+        train = range(length)
         for y in test:
             try:
-                sample.remove(y)
+                train.remove(y)
             except ValueError:
-                raise ValueError("List size is not evenly divisible by N({0})".format(size))
-        samples.append(sample)
-        tests.append(test)
-    return tests, samples
+                raise ValueError("List test size is not evenly divisible by N({0})".format(test_size))
+        traing_data.append(train)
+        test_data.append(test)
+    print "="*80
+    print test_data
+    print "="*80
+    print traing_data
+    return test_data, traing_data
 
 
 class CrossValidationWorkflow(Workflow):
@@ -192,12 +196,12 @@ class CrossValidationWorkflow(Workflow):
         iters = {}
         label = csvOut.outputs.__dict__.keys()[0]
         result = eval("csvOut.outputs.{0}".format(label))
-        iters['tests'], iters['samples'] = sample_test_lists(result, self.sample_size.default_value)
+        iters['tests'], iters['trains'] = subsample_crossValidationSet(result, self.sample_size.default_value)
         # Main event
-        out_fields = ['T1', 'T2', 'Label', 'sampleindex', 'testindex']
+        out_fields = ['T1', 'T2', 'Label', 'trainindex', 'testindex']
         inputs = Node(interface=IdentityInterface(fields=out_fields),
                        run_without_submitting=True, name='inputs')
-        inputs.iterables = [('sampleindex', iters['samples']),
+        inputs.iterables = [('trainindex', iters['trains']),
                              ('testindex', iters['tests'])]
         if not self.hasHeader.default_value:
             inputs.inputs.T1 = csvOut.outputs.column_0
@@ -207,11 +211,11 @@ class CrossValidationWorkflow(Workflow):
             pass #TODO
         metaflow = Workflow(name='metaflow')
         metaflow.add_nodes([inputs])
-        import pdb; pdb.set_trace()
+        """import pdb; pdb.set_trace()"""
         fusionflow = FusionLabelWorkflow()
-        self.connect([(metaflow, fusionflow, [('inputs.sampleindex', 'sampleT1s.index'), ('inputs.T1',    'sampleT1s.inlist')]),
-                      (metaflow, fusionflow, [('inputs.sampleindex', 'sampleT2s.index'), ('inputs.T2',    'sampleT2s.inlist')]),
-                      (metaflow, fusionflow, [('inputs.sampleindex', 'sampleLabels.index'), ('inputs.Label', 'sampleLabels.inlist')]),
+        self.connect([(metaflow, fusionflow, [('inputs.trainindex', 'trainT1s.index'), ('inputs.T1',    'trainT1s.inlist')]),
+                      (metaflow, fusionflow, [('inputs.trainindex', 'trainT2s.index'), ('inputs.T2',    'trainT2s.inlist')]),
+                      (metaflow, fusionflow, [('inputs.trainindex', 'trainLabels.index'), ('inputs.Label', 'trainLabels.inlist')]),
                       (metaflow, fusionflow, [('inputs.testindex',   'testT1s.index'), ('inputs.T1',    'testT1s.inlist')]),
                       (metaflow, fusionflow, [('inputs.testindex',   'testT2s.index'), ('inputs.T2',    'testT2s.inlist')]),
                       (metaflow, fusionflow, [('inputs.testindex',   'testLabels.index'), ('inputs.Label', 'testLabels.inlist')])
@@ -219,16 +223,16 @@ class CrossValidationWorkflow(Workflow):
 
     # def _connect_subworkflow(self):
     #     labelFusion = MapNode(FusionLabelWorkflow(),
-    #                           iterfield=['sampleindex', 'testindex'],
+    #                           iterfield=['trainindex', 'testindex'],
     #                           name='FusionLabelWorkflow')
     #     self.connect([(self.get_node('csvReader'), labelFusion.inputspec, [('column_0', 'T1'),
     #                                                                        ('column_2', 'T2'),
     #                                                                        ('column_1', 'Label')]),
-    #                   (self.get_node('createTests'), labelFusion.inputspec, [('samples', 'sampleindex'),
+    #                   (self.get_node('createTests'), labelFusion.inputspec, [('trains', 'trainindex'),
     #                                                                          ('tests', 'testindex')])
     #                  ])
     def _connect_subworkflow(self, node):
-        self.connect(createTests, 'samples', node, 'sampleindex')
+        self.connect(createTests, 'trains', node, 'trainindex')
         self.connect(createTests, 'tests', node, 'testindex')
         self.connect(csvReader, 'T1', node.inputspec, 'T1')
         self.connect(csvReader, 'T2', node.inputspec, 'T2')
@@ -253,9 +257,9 @@ class FusionLabelWorkflow(Workflow):
 
 
     def create(self):
-        sampleT1s    = Node(interface=Select(), name='sampleT1s')
-        sampleT2s    = Node(interface=Select(), name='sampleT2s')
-        sampleLabels = Node(interface=Select(), name='sampleLabels')
+        trainT1s    = Node(interface=Select(), name='trainT1s')
+        trainT2s    = Node(interface=Select(), name='trainT2s')
+        trainLabels = Node(interface=Select(), name='trainLabels')
 
         testT1s      = Node(interface=Select(), name='testT1s')
         testT2s      = Node(interface=Select(), name='testT2s')
@@ -273,12 +277,12 @@ class FusionLabelWorkflow(Workflow):
                        run_without_submitting=True, name='outputspec')
 
         self.connect([# Don't worry about T2s now per Regina
-                      # (sampleT1s, intensityImages, [('out', 'in1')]),
-                      # (sampleT2s, intensityImages, [('out', 'in2')]),
+                      # (trainT1s, intensityImages, [('out', 'in1')]),
+                      # (trainT2s, intensityImages, [('out', 'in2')]),
                       # (intensityImages, jointFusion, [('out', 'warped_intensity_images')]),
-                      (sampleT1s, jointFusion, [('out', 'warped_intensity_images')]),
+                      (trainT1s, jointFusion, [('out', 'warped_intensity_images')]),
                       #END: per Regina
-                      (sampleLabels, jointFusion, [('out', 'warped_label_images')]),
+                      (trainLabels, jointFusion, [('out', 'warped_label_images')]),
                       (jointFusion, outputs, [('output_label_image', 'output_label_image')]),
                       ])
         ## output => jointFusion.outputs.output_label_image
