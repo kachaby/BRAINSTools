@@ -226,7 +226,7 @@ class CrossValidationWorkflow(Workflow):
             'remove_unnecessary_outputs': 'false',
             'use_relative_paths': 'false',  # relative paths should be on, require hash update when changed.
             'remove_node_directories': 'false',  # Experimental
-            'local_hash_check': 'true'
+            'local_hash_check': 'false'
         }
 
         metaflow.add_nodes([inputsND])
