@@ -193,32 +193,48 @@ class CrossValidationWorkflow(Workflow):
         csvReader.inputs.header = self.hasHeader.default_value
         csvOut = csvReader.run()
 
+        print "="*80
+        print csvOut.outputs.__dict__
+        print "="*80
+
         iters = {}
         label = csvOut.outputs.__dict__.keys()[0]
         result = eval("csvOut.outputs.{0}".format(label))
         iters['tests'], iters['trains'] = subsample_crossValidationSet(result, self.sample_size.default_value)
         # Main event
         out_fields = ['T1', 'T2', 'Label', 'trainindex', 'testindex']
-        inputs = Node(interface=IdentityInterface(fields=out_fields),
+        inputsND = Node(interface=IdentityInterface(fields=out_fields),
                        run_without_submitting=True, name='inputs')
-        inputs.iterables = [('trainindex', iters['trains']),
+        inputsND.iterables = [('trainindex', iters['trains']),
                              ('testindex', iters['tests'])]
         if not self.hasHeader.default_value:
-            inputs.inputs.T1 = csvOut.outputs.column_0
-            inputs.inputs.Label = csvOut.outputs.column_1
-            inputs.inputs.T2 = csvOut.outputs.column_2
+            inputsND.inputs.T1 = csvOut.outputs.column_0
+            inputsND.inputs.Label = csvOut.outputs.column_1
+            inputsND.inputs.T2 = csvOut.outputs.column_2
         else:
+            inputsND.inputs.T1 = csvOut.outputs.__dict__['t1']
+            inputsND.inputs.Label = csvOut.outputs.__dict__['label']
+            inputsND.inputs.T2 = csvOut.outputs.__dict__['t2']
             pass #TODO
         metaflow = Workflow(name='metaflow')
-        metaflow.add_nodes([inputs])
+        metaflow.config['execution'] = {
+            'plugin': 'Linear',
+            'stop_on_first_crash': 'false',
+            'stop_on_first_rerun': 'false',  # This stops at first attempt to rerun, before running, and before deleting previous results.
+            'hash_method': 'timestamp',
+            'single_thread_matlab': 'true',  # Multi-core 2011a  multi-core for matrix multiplication.
+            'remove_unnecessary_outputs': 'false',
+            'use_relative_paths': 'false',  # relative paths should be on, require hash update when changed.
+            'remove_node_directories': 'false',  # Experimental
+            'local_hash_check': 'true'
+        }
+
+        metaflow.add_nodes([inputsND])
         """import pdb; pdb.set_trace()"""
         fusionflow = FusionLabelWorkflow()
         self.connect([(metaflow, fusionflow, [('inputs.trainindex', 'trainT1s.index'), ('inputs.T1',    'trainT1s.inlist')]),
-                      (metaflow, fusionflow, [('inputs.trainindex', 'trainT2s.index'), ('inputs.T2',    'trainT2s.inlist')]),
                       (metaflow, fusionflow, [('inputs.trainindex', 'trainLabels.index'), ('inputs.Label', 'trainLabels.inlist')]),
-                      (metaflow, fusionflow, [('inputs.testindex',   'testT1s.index'), ('inputs.T1',    'testT1s.inlist')]),
-                      (metaflow, fusionflow, [('inputs.testindex',   'testT2s.index'), ('inputs.T2',    'testT2s.inlist')]),
-                      (metaflow, fusionflow, [('inputs.testindex',   'testLabels.index'), ('inputs.Label', 'testLabels.inlist')])
+                      (metaflow, fusionflow, [('inputs.testindex',  'testT1s.index'), ('inputs.T1',    'testT1s.inlist')])
                       ])
 
     # def _connect_subworkflow(self):
@@ -260,17 +276,16 @@ class FusionLabelWorkflow(Workflow):
         trainT1s    = Node(interface=Select(), name='trainT1s')
         trainT2s    = Node(interface=Select(), name='trainT2s')
         trainLabels = Node(interface=Select(), name='trainLabels')
-
         testT1s      = Node(interface=Select(), name='testT1s')
-        testT2s      = Node(interface=Select(), name='testT2s')
-        testLabels   = Node(interface=Select(), name='testLabels')
+        #testT2s      = Node(interface=Select(), name='testT2s')
+        #testLabels   = Node(interface=Select(), name='testLabels')
 
-        intensityImages = Node(interface=Merge(2), name='intensityImages')
+        #intensityImages = Node(interface=Merge(2), name='intensityImages')
 
         jointFusion = Node(interface=JointFusion(), name='jointFusion')
         jointFusion.inputs.dimension = 3
         jointFusion.inputs.modalities = 1  #TODO: verify 2 for T1/T2
-        jointFusion.inputs.method = 'Joint[0.1, 2]'
+        jointFusion.inputs.method =  "Joint[0.1,2]" # this does not work
         jointFusion.inputs.output_label_image = 'fusion_neuro2012_20.nii.gz'
 
         outputs = Node(interface=IdentityInterface(fields=['output_label_image']),
@@ -279,9 +294,8 @@ class FusionLabelWorkflow(Workflow):
         self.connect([# Don't worry about T2s now per Regina
                       # (trainT1s, intensityImages, [('out', 'in1')]),
                       # (trainT2s, intensityImages, [('out', 'in2')]),
-                      # (intensityImages, jointFusion, [('out', 'warped_intensity_images')]),
+                      (testT1s, jointFusion, [('out', 'target_image')]),
                       (trainT1s, jointFusion, [('out', 'warped_intensity_images')]),
-                      #END: per Regina
                       (trainLabels, jointFusion, [('out', 'warped_label_images')]),
                       (jointFusion, outputs, [('output_label_image', 'output_label_image')]),
                       ])
@@ -291,7 +305,8 @@ class FusionLabelWorkflow(Workflow):
 def main(**kwargs):
     workflow = CrossValidationWorkflow(csv_file=kwargs['FILE'], size=kwargs['SIZE'], hasHeader=kwargs['--header'])
     workflow.create()
-    return workflow.write_graph()
+    workflow.write_graph()
+    return workflow.run()
 
 
 def _test():
