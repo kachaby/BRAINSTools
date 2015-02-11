@@ -224,7 +224,7 @@ def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR
     many_cpu_JointFusion_options_dictionary = {'qsub_args': modify_qsub_args(CLUSTER_QUEUE,8,4,4), 'overwrite': True}
     jointFusion.plugin_args = many_cpu_JointFusion_options_dictionary
     jointFusion.inputs.dimension=3
-    jointFusion.inputs.num_modalities=1
+    jointFusion.inputs.modalities=1
     jointFusion.inputs.method='Joint[0.1,2]'
     jointFusion.inputs.output_label_image='fusion_neuro2012_20.nii.gz'
 
