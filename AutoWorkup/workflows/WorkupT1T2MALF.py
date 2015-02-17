@@ -40,7 +40,8 @@ def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR
                                                              'subj_lmks', #The landmarks corresponding to t1_image
                                                              'subj_fixed_head_labels', #The fixed head labels from BABC
                                                              'subj_left_hemisphere', #The warped left hemisphere mask
-                                                             'atlasWeightFilename'  #The static weights file name
+                                                             'atlasWeightFilename',  #The static weights file name
+                                                             'labelBaseFilename' #Atlas label base name ex) neuro_lbls.nii.gz
                                                             ]),
                          run_without_submitting=True,
                          name='inputspec')
@@ -61,7 +62,8 @@ def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR
     malf_atlas_mergeindex = 1;
     for malf_atlas_subject in good_subjects:
         ## Need DataGrabber Here For the Atlas
-        MALF_DG[malf_atlas_subject] = pe.Node(interface=nio.DataGrabber(infields=['subject'],
+        MALF_DG[malf_atlas_subject] = pe.Node(interface=nio.DataGrabber(infields=['subject',
+                                                                                  'labelBaseFilename'],
                                                         outfields=['malf_atlas_t1',
                                                                    'malf_atlas_lbls',
                                                                    'malf_atlas_lmks'
@@ -71,9 +73,11 @@ def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR
         MALF_DG[malf_atlas_subject].inputs.base_directory = BASE_DATA_GRABBER_DIR
 
         MALF_DG[malf_atlas_subject].inputs.subject = malf_atlas_subject
+        MALFWF.connect( inputsSpec, 'labelBaseFilename',
+                        MALF_DG[malf_atlas_subject], 'labelBaseFilename')
         MALF_DG[malf_atlas_subject].inputs.field_template = {
                                              'malf_atlas_t1': '%s/TissueClassify/t1_average_BRAINSABC.nii.gz',
-                                             'malf_atlas_lbls': '%s/TissueClassify/neuro_lbls.nii.gz',
+                                             #'malf_atlas_lbls': '%s/TissueClassify/neuro_lbls.nii.gz',
                                              'malf_atlas_lmks': '%s/ACPCAlign/BCD_ACPC_Landmarks.fcsv',
         }
         MALF_DG[malf_atlas_subject].inputs.template_args = {

@@ -140,6 +140,7 @@ def writeCVSubsetFile( environment, experiment, pipeline, cluster, csv_file, tes
             CV_MALF_WF.connect(testSessionSpec,'template_leftHemisphere', myMALF,'inputspec.subj_left_hemisphere')
             CV_MALF_WF.connect(testSessionSpec,'landmarkInACPCAlignedSpace', myMALF,'inputspec.subj_lmks')
             CV_MALF_WF.connect(testSessionSpec,'template_weights_50Lmks_wts', myMALF,'inputspec.atlasWeightFilename')
+            CV_MALF_WF.connect(testSessionSpec, 'labelFilename', myMALF, 'inputspec.labelBaseFilename')
 
             """ set test image information
             """
@@ -149,6 +150,7 @@ def writeCVSubsetFile( environment, experiment, pipeline, cluster, csv_file, tes
             testSessionSpec.inputs.template_leftHemisphere = testSession['warpedAtlasLeftHemisphere']
             testSessionSpec.inputs.landmarkInACPCAlignedSpace = testSession['lmk']
             testSessionSpec.inputs.template_weights_50Lmks_wts = "/Shared/sinapse/scratch/eunyokim/src/NamicExternal/build_Mac_201501/bin/Atlas/Atlas_20131115/20141004_BCD/template_landmarks_50Lmks.fcsv"
+            testSessionSpec.inputs.labelFilename='FS_wmparc.nii.gz'
 
             """
             DataSink
