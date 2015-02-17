@@ -28,7 +28,7 @@ def getListIndexOrNoneIfOutOfRange(imageList, index):
         return None
 
 
-def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR):
+def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR, runFixFusionLabelMap=True):
     from nipype.interfaces import ants
 
     CLUSTER_QUEUE=master_config['queue']
@@ -305,19 +305,23 @@ def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR
         #print("\n\n\n\n\n\n{0}\n\n\n\nXXXXXXXX".format(fixedFusionLabelFN))
         return fixedFusionLabelFN
 
-    fixFusionLabelMap = pe.Node(Function(function=FixLabelMapFromNeuromorphemetrics2012,
-                                                   input_names=['fusionFN','FixedHeadFN','LeftHemisphereFN','outFN' ],
-                                                   output_names=['fixedFusionLabelFN']), name="FixedFusionLabelmap")
-    fixFusionLabelMap.inputs.outFN = 'neuro2012_20fusion_merge_seg.nii.gz'
-    MALFWF.connect(jointFusion, 'output_label_image', fixFusionLabelMap, 'fusionFN')
-    MALFWF.connect(inputsSpec, 'subj_fixed_head_labels', fixFusionLabelMap, 'FixedHeadFN')
-    MALFWF.connect(inputsSpec, 'subj_left_hemisphere', fixFusionLabelMap, 'LeftHemisphereFN')
+    if runFixFusionLabelMap:
+        fixFusionLabelMap = pe.Node(Function(function=FixLabelMapFromNeuromorphemetrics2012,
+                                                       input_names=['fusionFN','FixedHeadFN','LeftHemisphereFN','outFN' ],
+                                                       output_names=['fixedFusionLabelFN']), name="FixedFusionLabelmap")
+        fixFusionLabelMap.inputs.outFN = 'neuro2012_20fusion_merge_seg.nii.gz'
+        MALFWF.connect(jointFusion, 'output_label_image', fixFusionLabelMap, 'fusionFN')
+        MALFWF.connect(inputsSpec, 'subj_fixed_head_labels', fixFusionLabelMap, 'FixedHeadFN')
+        MALFWF.connect(inputsSpec, 'subj_left_hemisphere', fixFusionLabelMap, 'LeftHemisphereFN')
+        MALFWF.connect(fixFusionLabelMap,'fixedFusionLabelFN',outputsSpec,'MALF_neuro2012_labelmap')
+    else:
+        MALFWF.connect(jointFusion, 'output_label_image', outputsSpec,'MALF_neuro2012_labelmap')
 
 
 
     MALFWF.connect(warpedAtlasT1MergeNode,'out',jointFusion,'warped_intensity_images')
     MALFWF.connect(warpedAtlasLblMergeNode,'out',jointFusion,'warped_label_images')
     MALFWF.connect(inputsSpec, 'subj_t1_image',jointFusion,'target_image')
-    MALFWF.connect(fixFusionLabelMap,'fixedFusionLabelFN',outputsSpec,'MALF_neuro2012_labelmap')
+
 
     return MALFWF

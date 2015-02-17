@@ -123,7 +123,8 @@ def writeCVSubsetFile( environment, experiment, pipeline, cluster, csv_file, tes
             myMALF = CreateMALFWorkflow( MALFWFName,
                                          master_config,
                                          [ (trainData[i])['id'] for i in range( len(trainData))],
-                                         BASE_DATA_GRABBER_DIR )
+                                         BASE_DATA_GRABBER_DIR,
+                                         runFixFusionLabelMap=False)
 
             testSessionName= "testSessionSpec_Set{0}_{1}".format(subset_no, testSession['id'])
             testSessionSpec = pe.Node( interface=IdentityInterface( fields=['t1_average',
@@ -167,7 +168,7 @@ def writeCVSubsetFile( environment, experiment, pipeline, cluster, csv_file, tes
 
             subset_no=subset_no+1
 
-    CV_MALF_WF.write_graph()
+    #CV_MALF_WF.write_graph()
     CV_MALF_WF.run( plugin=master_config['plugin_name'],
                     plugin_args=master_config['plugin_args'])
 
