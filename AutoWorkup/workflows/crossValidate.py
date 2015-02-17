@@ -130,7 +130,8 @@ def writeCVSubsetFile( environment, experiment, pipeline, cluster, csv_file, tes
                                                                          'tissueLabel',
                                                                          'template_leftHemisphere',
                                                                          'landmarkInACPCAlignedSpace',
-                                                                         'template_weights_50Lmks_wts']),
+                                                                         'template_weights_50Lmks_wts',
+                                                                         'labelFilename']),
                                     run_without_submitting = True,
                                     name=testSessionName)
 

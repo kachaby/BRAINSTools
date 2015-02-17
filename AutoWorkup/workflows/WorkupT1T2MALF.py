@@ -77,12 +77,12 @@ def CreateMALFWorkflow(WFname, master_config,good_subjects,BASE_DATA_GRABBER_DIR
                         MALF_DG[malf_atlas_subject], 'labelBaseFilename')
         MALF_DG[malf_atlas_subject].inputs.field_template = {
                                              'malf_atlas_t1': '%s/TissueClassify/t1_average_BRAINSABC.nii.gz',
-                                             #'malf_atlas_lbls': '%s/TissueClassify/neuro_lbls.nii.gz',
+                                             'malf_atlas_lbls': '%s/TissueClassify/%s',
                                              'malf_atlas_lmks': '%s/ACPCAlign/BCD_ACPC_Landmarks.fcsv',
         }
         MALF_DG[malf_atlas_subject].inputs.template_args = {
                                             'malf_atlas_t1':   [['subject']],
-                                            'malf_atlas_lbls': [['subject']],
+                                            'malf_atlas_lbls': [['subject','labelBaseFilename']],
                                             'malf_atlas_lmks': [['subject']],
         }
         MALF_DG[malf_atlas_subject].inputs.template = '*'
