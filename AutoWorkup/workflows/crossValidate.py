@@ -98,12 +98,15 @@ def writeCVSubsetFile( environment, experiment, pipeline, cluster, csv_file, tes
     #master_config = {'queue':'HJ',
     #    'long_q':'HJ'}
 
-    """ workflow
+    """
+    workflow
     """
     import nipype.pipeline.engine as pe
+    import nipype.interfaces.io as nio
     from WorkupT1T2MALF import CreateMALFWorkflow
     CV_MALF_WF = pe.Workflow(name="CV_MALF")
     CV_MALF_WF.base_dir = master_config['cachedir']
+
 
     subset_no = 1
     for subset in cv_subsets:
@@ -115,36 +118,51 @@ def writeCVSubsetFile( environment, experiment, pipeline, cluster, csv_file, tes
 
         print [ (trainData[i])['id'] for i in range( len(trainData))]
 
-        myMALF = CreateMALFWorkflow( "MALF_Set"+str(subset_no),
-                                     master_config,
-                                     [ (trainData[i])['id'] for i in range( len(trainData))],
-                                     BASE_DATA_GRABBER_DIR )
+        for testSession in testData:
+            MALFWFName = "MALF_Set{0}_{1}".format(subset_no, testSession['id'])
+            myMALF = CreateMALFWorkflow( MALFWFName,
+                                         master_config,
+                                         [ (trainData[i])['id'] for i in range( len(trainData))],
+                                         BASE_DATA_GRABBER_DIR )
 
-        testDataSpec = pe.Node( interface=IdentityInterface( fields=['t1_average',
-                                                                     'tissueLabel',
-                                                                     'template_leftHemisphere',
-                                                                     'landmarkInACPCAlignedSpace',
-                                                                     'template_weights_50Lmks_wts']),
-                                run_without_submitting = True,
-                                name='testDataSpec_Set'+str(subset_no))
+            testSessionName= "testSessionSpec_Set{0}_{1}".format(subset_no, testSession['id'])
+            testSessionSpec = pe.Node( interface=IdentityInterface( fields=['t1_average',
+                                                                         'tissueLabel',
+                                                                         'template_leftHemisphere',
+                                                                         'landmarkInACPCAlignedSpace',
+                                                                         'template_weights_50Lmks_wts']),
+                                    run_without_submitting = True,
+                                    name=testSessionName)
 
-        CV_MALF_WF.connect(testDataSpec,'t1_average', myMALF,'inputspec.subj_t1_image')
-        CV_MALF_WF.connect(testDataSpec,'tissueLabel',myMALF,'inputspec.subj_fixed_head_labels')
+            CV_MALF_WF.connect(testSessionSpec,'t1_average', myMALF,'inputspec.subj_t1_image')
+            CV_MALF_WF.connect(testSessionSpec,'tissueLabel',myMALF,'inputspec.subj_fixed_head_labels')
 
-        CV_MALF_WF.connect(testDataSpec,'template_leftHemisphere', myMALF,'inputspec.subj_left_hemisphere')
-        CV_MALF_WF.connect(testDataSpec,'landmarkInACPCAlignedSpace', myMALF,'inputspec.subj_lmks')
-        CV_MALF_WF.connect(testDataSpec,'template_weights_50Lmks_wts', myMALF,'inputspec.atlasWeightFilename')
+            CV_MALF_WF.connect(testSessionSpec,'template_leftHemisphere', myMALF,'inputspec.subj_left_hemisphere')
+            CV_MALF_WF.connect(testSessionSpec,'landmarkInACPCAlignedSpace', myMALF,'inputspec.subj_lmks')
+            CV_MALF_WF.connect(testSessionSpec,'template_weights_50Lmks_wts', myMALF,'inputspec.atlasWeightFilename')
 
-        """ set test image information
-        """
-        print testData
-        testDataSpec.inputs.t1_average = testData[0]['t1']
-        testDataSpec.inputs.tissueLabel = testData[0]['fixed_head_label']
-        testDataSpec.inputs.template_leftHemisphere = testData[0]['warpedAtlasLeftHemisphere']
-        testDataSpec.inputs.landmarkInACPCAlignedSpace = testData[0]['lmk']
-        testDataSpec.inputs.template_weights_50Lmks_wts = "/Shared/sinapse/scratch/eunyokim/src/NamicExternal/build_Mac_201501/bin/Atlas/Atlas_20131115/20141004_BCD/template_landmarks_50Lmks.fcsv"
+            """ set test image information
+            """
+            print testSession
+            testSessionSpec.inputs.t1_average = testSession['t1']
+            testSessionSpec.inputs.tissueLabel = testSession['fixed_head_label']
+            testSessionSpec.inputs.template_leftHemisphere = testSession['warpedAtlasLeftHemisphere']
+            testSessionSpec.inputs.landmarkInACPCAlignedSpace = testSession['lmk']
+            testSessionSpec.inputs.template_weights_50Lmks_wts = "/Shared/sinapse/scratch/eunyokim/src/NamicExternal/build_Mac_201501/bin/Atlas/Atlas_20131115/20141004_BCD/template_landmarks_50Lmks.fcsv"
 
-        subset_no=subset_no+1
+            """
+            DataSink
+            """
+            dsName = "DataSink_DS_Set{0}_{1}".format(subset_no,testSession['id'])
+            DataSink = pe.Node(name=dsName, interface=nio.DataSink())
+            DataSink.overwrite = master_config['ds_overwrite']
+            DataSink.inputs.container = 'CV_Set{0}/{1}'.format(subset_no, testSession['id'])
+            DataSink.inputs.base_directory = master_config['resultdir']
+
+            CV_MALF_WF.connect(myMALF, 'outputspec.MALF_neuro2012_labelmap',
+                               DataSink, 'Segmentation.@MALF_neuro2012_labelmap')
+
+            subset_no=subset_no+1
 
     CV_MALF_WF.write_graph()
     CV_MALF_WF.run( plugin=master_config['plugin_name'],
