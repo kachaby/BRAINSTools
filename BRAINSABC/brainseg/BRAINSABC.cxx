@@ -320,12 +320,16 @@ CreateTypedMap(const AtlasRegType::StringVector &keys, const AtlasRegType::Strin
   return rval;
 }
 
-
+#include <tbb/task_scheduler_init.h>
 int main(int argc, char * *argv)
 {
+  tbb::task_scheduler_init init;
   PARSE_ARGS;
   BRAINSRegisterAlternateIO();
   const BRAINSUtils::StackPushITKDefaultNumberOfThreads TempDefaultNumberOfThreadsHolder(numberOfThreads);
+
+  tbb::task_scheduler_init init(
+    itk::MultiThreader::GetGlobalDefaultNumberOfThreads() );
 
   // TODO:  Need to figure out how to conserve memory better during the running
   // of this application:  itk::DataObject::GlobalReleaseDataFlagOn();
