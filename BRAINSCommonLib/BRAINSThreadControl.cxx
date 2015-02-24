@@ -24,6 +24,7 @@ namespace BRAINSUtils
 StackPushITKDefaultNumberOfThreads::StackPushITKDefaultNumberOfThreads(const int desiredCount) :
   m_originalThreadValue( itk::MultiThreader::GetGlobalDefaultNumberOfThreads() )
 {
+  itk::MultiThreader::SetGlobalDefaultUseThreadPool(true);
   int threadCount(-1);
 
   if( desiredCount > 0 )  // NOTE: Default is -1, which then uses the ITK default.
