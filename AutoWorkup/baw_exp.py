@@ -20,6 +20,43 @@ import time
 ##############################################################################
 
 
+def setDataSinkRewriteValue(cli, cfg):
+    """
+    Return the behavior for boolean GLOBAL_DATA_SINK_REWRITE
+
+    If the flag '--rewrite_datasinks' is set on the command line, pipeline will force rerun of the
+    pipeline datasinks.  If not, then the configuration file entry 'GLOBAL_DATA_SINK_REWRITE' under the
+    'PIPELINE' heading will control this behavior
+
+    >>> import baw_exp as baw
+    >>> baw.setDataSinkRewriteValue(True, True); baw.GLOBAL_DATA_SINK_REWRITE
+    *** Ignoring datasinks for pipeline rewriting ***
+    False
+    >>> baw.setDataSinkRewriteValue(False, True); baw.GLOBAL_DATA_SINK_REWRITE
+    *** Ignoring datasinks for pipeline rewriting ***
+    False
+    >>> baw.setDataSinkRewriteValue(True, False); baw.GLOBAL_DATA_SINK_REWRITE
+    *** Ignoring datasinks for pipeline rewriting ***
+    False
+    >>> baw.setDataSinkRewriteValue(False, False); baw.GLOBAL_DATA_SINK_REWRITE
+    True
+
+    :param cli: command line value
+    :type cli: bool
+    :param cfg: configuration file value
+    :type cfg: bool
+
+    Sets the variable `GLOBAL_DATA_SINK_REWRITE` constant flag used in :mod:`WorkupT1T2()`
+    """
+    assert isinstance(cli, bool) and isinstance(cfg, bool), "Inputs are not boolean: {0}, {1}".format(cli, cfg)
+    if cli or cfg:
+        print "*** Force datasinks rewriting for pipeline rewriting ***, commandline= {0}, configfile= {1}".format(cli, cfg)  # TODO: Use logging
+        GLOBAL_DATA_SINK_REWRITE = True
+    else:
+        print "*** Default datasink behavior for pipeline ***, commandline= {0}, configfile= {1}".format(cli, cfg)  # TODO: Use logging
+        GLOBAL_DATA_SINK_REWRITE = False
+    return GLOBAL_DATA_SINK_REWRITE
+
 def OpenSubjectDatabase(ExperimentBaseDirectoryCache, single_subject, mountPrefix, subject_data_file):
     import os.path
     import SessionDB
