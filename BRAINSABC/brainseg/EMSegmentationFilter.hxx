@@ -1599,12 +1599,12 @@ EMSegmentationFilter<TInputImage, TProbabilityImage>
   std::vector<typename ByteImageType::Pointer> subjectCandidateRegions;
   subjectCandidateRegions.resize(WarpedPriorsList.size() );
     { // StartValid Regions Section
-/*
     tbb::parallel_for(tbb::blocked_range<size_t>(0,WarpedPriorsList.size()),
       [&] (const tbb::blocked_range<size_t>& r) {
       for( size_t i = r.begin(); i != r.end(); ++i )
-*/
+/*
     for( LOOPITERTYPE i = 0; i < (LOOPITERTYPE)WarpedPriorsList.size(); i++ )
+*/
       {
 
       typedef itk::BinaryThresholdImageFilter<TProbabilityImage, ByteImageType> ProbThresholdType;
@@ -1717,9 +1717,9 @@ EMSegmentationFilter<TInputImage, TProbabilityImage>
     multFilter->Update();
     subjectCandidateRegions[i] = multFilter->GetOutput();
       } // End loop over all warped priors
-/*
       }
     );
+/*
  */
 
     { // Ensure that every candidate region has some value
